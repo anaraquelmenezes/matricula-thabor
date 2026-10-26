@@ -673,7 +673,7 @@ async function gerarPdf(){
   const enviado=await enviarPdfs('matricula',arquivos);
   const dr=await enviarDocumentos(st);
   if(dr.falhas)alert('Os PDFs foram gerados, mas '+dr.falhas+' documento(s) anexado(s) NÃO foram enviados à secretaria.\n\nMotivo: '+dr.erro+'\n\nClique em "Gerar" novamente para tentar reenviar.');
-  st.textContent=arquivos.length+' PDFs gerados: '+arquivos.map(a=>a.rotulo).join(', ')+'. Se o navegador pedir, permita o download de múltiplos arquivos.'+(enviado?'':AVISO_ENVIO)+(dr.total?(dr.falhas?' Atenção: '+dr.falhas+' documento(s) anexado(s) não foram enviados ('+dr.erro+'). Clique em "Gerar" novamente para tentar de novo.':' '+dr.ok+' documento(s) anexado(s) enviado(s) à secretaria.'):'');
+  st.textContent=arquivos.length+' PDFs gerados: '+arquivos.map(a=>a.rotulo).join(', ')+'. Se o navegador pedir, permita o download de múltiplos arquivos.'+(enviado?'':AVISO_ENVIO)+(dr.aviso||'')+(dr.total?(dr.falhas?' Atenção: '+dr.falhas+' documento(s) anexado(s) não foram enviados ('+dr.erro+'). Clique em "Gerar" novamente para tentar de novo.':' '+dr.ok+' documento(s) anexado(s) enviado(s) à secretaria.'):'');
  }catch(e){console.error(e);st.textContent='Não foi possível gerar os PDFs ('+(e&&e.message?e.message:'erro')+'). Verifique sua conexão e tente novamente.'}
  finally{btn.disabled=false}
 }
@@ -886,10 +886,11 @@ function aplicarPagamento(){
 function blobB64(blob){return new Promise((ok,er)=>{const r=new FileReader();r.onload=()=>ok(String(r.result).split(',')[1]||'');r.onerror=()=>er(r.error);r.readAsDataURL(blob)})}
 /* envia à secretaria (pasta do aluno no Drive) os documentos anexados pelos novatos; um arquivo por chamada */
 async function enviarDocumentos(st){
- const res={total:0,ok:0,falhas:0,erro:''};
- if(!CONFIG.api||!window._protocolo||val('situacao')!=='Novato'||!window.DOCS_SEL)return res;
+ const res={total:0,ok:0,falhas:0,erro:'',aviso:''};
+ if(!CONFIG.api||val('situacao')!=='Novato'||!window.DOCS_SEL)return res;
+ if(!window._protocolo){res.aviso=' Atenção: os documentos anexados não foram enviados porque a matrícula ficou sem protocolo.';return res}
  const itens=[];Object.values(DOCS_SEL).forEach(lista=>lista.forEach((it,i)=>{if(!it.enviado)itens.push({it,i,n:lista.length})}));
- res.total=itens.length;if(!itens.length)return res;
+ res.total=itens.length;if(!itens.length){const t=[];Object.values(DOCS_SEL).forEach(l=>l.forEach(it=>t.push(it)));res.aviso=t.length?' Os documentos anexados já haviam sido enviados.':' Nenhum documento foi anexado na etapa Documentos.';return res}
  const c=coletarCampos();
  for(let k=0;k<itens.length;k++){
   const {it,i}=itens[k];
