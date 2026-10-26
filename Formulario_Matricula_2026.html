@@ -672,6 +672,7 @@ async function gerarPdf(){
   arquivos.forEach((a,i)=>{if(i===0)baixarPdf(a.url,a.nome);else setTimeout(()=>baixarPdf(a.url,a.nome),i*450)});
   const enviado=await enviarPdfs('matricula',arquivos);
   const dr=await enviarDocumentos(st);
+  if(dr.falhas)alert('Os PDFs foram gerados, mas '+dr.falhas+' documento(s) anexado(s) NÃO foram enviados à secretaria.\n\nMotivo: '+dr.erro+'\n\nClique em "Gerar" novamente para tentar reenviar.');
   st.textContent=arquivos.length+' PDFs gerados: '+arquivos.map(a=>a.rotulo).join(', ')+'. Se o navegador pedir, permita o download de múltiplos arquivos.'+(enviado?'':AVISO_ENVIO)+(dr.total?(dr.falhas?' Atenção: '+dr.falhas+' documento(s) anexado(s) não foram enviados ('+dr.erro+'). Clique em "Gerar" novamente para tentar de novo.':' '+dr.ok+' documento(s) anexado(s) enviado(s) à secretaria.'):'');
  }catch(e){console.error(e);st.textContent='Não foi possível gerar os PDFs ('+(e&&e.message?e.message:'erro')+'). Verifique sua conexão e tente novamente.'}
  finally{btn.disabled=false}
